@@ -1,0 +1,32 @@
+name: Build
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Extract zip
+        run: |
+          mkdir -p work
+          unzip -oq ./*.zip -d work
+          POM=$(find work -name pom.xml -not -path '*/target/*' | head -n 1)
+          echo "PROJECT_DIR=$(dirname "$POM")" >> "$GITHUB_ENV"
+
+      - name: Build
+        run: mvn -B package
+        working-directory: ${{ env.PROJECT_DIR }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CaneIslands
+          path: ${{ env.PROJECT_DIR }}/target/CaneIslands.jar
